@@ -149,6 +149,7 @@ public:
         k_param_auto_slew_rate,     // deprecated - can be deleted
         k_param_sonar_type,
         k_param_super_simple = 155,
+        k_param_curr_amps_offset = 156,
         k_param_axis_enabled = 157, // deprecated - remove with next eeprom number change
         k_param_copter_leds_mode,
         k_param_ahrs, // AHRS group
@@ -284,6 +285,7 @@ public:
                                                 // 4=voltage and current
     AP_Float        volt_div_ratio;
     AP_Float        curr_amp_per_volt;
+    AP_Float        curr_amps_offset;		// Volt offset for 0.0 Amp
     AP_Int16        pack_capacity;              // Battery pack capacity less reserve
     AP_Int8         failsafe_battery_enabled;   // battery failsafe enabled
     AP_Int8         failsafe_gps_enabled;       // gps failsafe enabled
