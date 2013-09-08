@@ -8,10 +8,10 @@ VRBRAIN  autopilot system  is a versatile UAV system based around the VRBRAIN mu
 
 System Components
 
-    VRBRAIN autopilot board loaded with the latest version of  Arducopter 32 firmware
-    Mission Planner software – gives you an easy point-and-click setup/configuration, along with a full-featured ground control interface
-    A suitable vehicle for your mission
-    Other useful options: e.g. data radios, which allow two-way wireless telemetry and control between the vehicle and your computer.
+    1. VRBRAIN autopilot board loaded with the latest version of  Arducopter 32 firmware
+    2. Mission Planner software – gives you an easy point-and-click setup/configuration, along with a full-featured ground control interface
+    3. A suitable vehicle for your mission
+    4. Other useful options: e.g. data radios, which allow two-way wireless telemetry and control between the vehicle and your computer.
 
 The VRBRAIN autopilot control board include:
 
