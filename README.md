@@ -28,3 +28,5 @@ The VRBRAIN autopilot control board include:
     1 Buzzer output.
     1 Input for control lipo voltage
     Physical Dimension 6×4 cm
+    
+    http://vrbrain.wordpress.com/
