@@ -124,21 +124,6 @@ typedef struct i2c_dev {
 
 void i2c_init(i2c_dev *dev, uint16_t address, uint32_t speed);
 void i2c_deinit(i2c_dev *dev);
-/*
-uint8_t i2c_Write(i2c_dev *dev, uint16_t dev_addr, uint8_t len, uint8_t *data);
-uint8_t i2c_write(i2c_dev *dev, uint16_t eerpm_addr, uint16_t addr, uint8_t data);
-uint8_t i2c_8bitaddr_write(i2c_dev *dev, uint16_t dev_addr, uint8_t addr, uint8_t data);
-uint8_t i2c_read(i2c_dev *dev, uint16_t eerpm_addr, uint16_t addr, uint8_t *data);
-uint8_t i2c_buffer_read(i2c_dev *dev, uint16_t eerpm_addr, uint16_t addr, uint8_t len, uint8_t *buf);
-uint8_t i2c_8bitaddr_buffer_read(i2c_dev *dev, uint16_t dev_addr, uint8_t addr, uint8_t len, uint8_t *buf);
-
-
-uint8_t i2c_send(i2c_dev *dev, uint8_t data);
-uint8_t i2c_readack(i2c_dev *dev, uint8_t *data);
-uint8_t i2c_stop(i2c_dev *dev);
-uint8_t i2c_start(i2c_dev *dev, uint8_t Address);
-uint8_t i2c_start_wait(i2c_dev *dev, uint8_t Address);
-*/
 
 uint8_t i2c_is_busy();
 uint32_t sEE_WaitEepromStandby(i2c_dev *dev, uint8_t addr);
@@ -154,6 +139,8 @@ uint32_t sEE_WritePage(uint8_t* pBuffer, uint16_t WriteAddr, uint8_t* NumByteToW
 uint32_t sEE_WriteBuffer(uint8_t* pBuffer, uint16_t WriteAddr, uint16_t NumByteToWrite);
 uint32_t sEE_WaitEepromStandbyState(void);
 
+void i2c_master_release_bus(const i2c_dev *dev);
+void i2c_bus_reset(const i2c_dev *dev);
 /* USER Callbacks: These are functions for which prototypes only are declared in
    EEPROM driver and that should be implemented into user applicaiton. */
 /* sEE_TIMEOUT_UserCallback() function is called whenever a timeout condition

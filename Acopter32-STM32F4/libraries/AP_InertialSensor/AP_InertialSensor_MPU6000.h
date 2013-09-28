@@ -17,7 +17,7 @@
 
 // enable debug to see a register dump on startup
 #define MPU6000_DEBUG 0
-
+//#define ENHANCED
 // DMP memory
 extern const uint8_t        dmpMem[8][16][16] PROGMEM;
 
@@ -48,6 +48,8 @@ public:
     // get_delta_time returns the time period in seconds overwhich the sensor data was collected
     float            	get_delta_time();
 
+    //gets the die temperature
+    float 		get_temperature() const { return _temp; }
 protected:
     uint16_t                    _init_sensor( Sample_rate sample_rate );
 
@@ -67,11 +69,11 @@ private:
     static AP_HAL::SPIDeviceDriver *_spi;
     static AP_HAL::Semaphore *_spi_sem;
 
-    uint16_t					_num_samples;
+    uint16_t			_num_samples;
 
     float                       _temp;
 
-    float                       _temp_to_celsius( uint16_t );
+    float                       _temp_to_celsius( int32_t );
 
     static const float          _gyro_scale;
 
@@ -96,14 +98,14 @@ private:
 
     // support for updating filter at runtime
     uint8_t _last_filter_hz;
-/*
+
 #if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     // support for _sample_rate
     uint8_t _sample_rate;
     //how many seconds between samples
-    float _sample_time;
+    uint16_t _sample_time_usec;
 #endif
-*/
+
     void _set_filter_register(uint8_t filter_hz, uint8_t default_filter);
 
 public:

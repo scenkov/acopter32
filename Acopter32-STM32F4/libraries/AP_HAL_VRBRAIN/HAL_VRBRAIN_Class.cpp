@@ -15,6 +15,11 @@
 
 using namespace VRBRAIN;
 
+//_USART1 PIN 3 AND 4 OF THE INPUT RAIL
+//_USART2 INTERNAL SERIAL PORT
+//_USART3 PIN 1 AND 2 OF THE INPUT RAIL
+
+
 // XXX make sure these are assigned correctly
 static VRBRAINUARTDriver uartADriver(_USART1,1);
 static VRBRAINUARTDriver uartBDriver(_USART3,0);
@@ -61,10 +66,12 @@ void HAL_VRBRAIN::init(int argc,char* const argv[]) const
   /* initialize all drivers and private members here.
    * up to the programmer to do this in the correct order.
    * Scheduler should likely come first. */
+  //delay_us(2000000);
+
   hal.scheduler->init(NULL);
   //uartA->begin(115200);
 
-  hal.uartA->begin(115200);
+  hal.uartA->begin(57600);
   hal.uartB->begin(38400);
   hal.uartC->begin(57600);
 
