@@ -335,6 +335,7 @@ uint16 EEPROMClass::init(void)
 	FLASH_Unlock();
 
 	erased0 = (*(__IO uint16 *)(PageBase0 + 2));
+	if (erased0 == 0xffff) erased0 = 0;
 	hal.console->printf("\nEEprom write cycles %d\n ", erased0);
 
 	FLASH_Unlock();
