@@ -6,6 +6,8 @@
 #include "stm32f4xx.h"
 #include "EEPROM.h"
 
+extern const AP_HAL::HAL& hal;
+
 /**
   * @brief  Check page for blank
   * @param  page base address
@@ -327,8 +329,13 @@ uint16 EEPROMClass::init(uint32 pageBase0, uint32 pageBase1, uint32 pageSize)
 
 uint16 EEPROMClass::init(void)
 {
-	uint16 status0, status1;
+	uint16 status0, status1, erased0;
 	FLASH_Status FlashStatus;
+
+	FLASH_Unlock();
+
+	erased0 = (*(__IO uint16 *)(PageBase0 + 2));
+	hal.console->printf("\nEEprom write cycles %d\n ", erased0);
 
 	FLASH_Unlock();
 	Status = EEPROM_NO_VALID_PAGE;
