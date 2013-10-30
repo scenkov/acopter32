@@ -186,38 +186,24 @@
 #if CONFIG_HAL_BOARD == HAL_BOARD_APM1
  # define LED_ON           HIGH
  # define LED_OFF          LOW
- # define BATTERY_VOLT_PIN      0      // Battery voltage on A0
- # define BATTERY_CURR_PIN      1      // Battery current on A1
 #elif CONFIG_HAL_BOARD == HAL_BOARD_APM2
  # define LED_ON           LOW
  # define LED_OFF          HIGH
- # define BATTERY_VOLT_PIN      1      // Battery voltage on A1
- # define BATTERY_CURR_PIN      2      // Battery current on A2
 #elif CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL
  # define LED_ON           LOW
  # define LED_OFF          HIGH
- # define BATTERY_VOLT_PIN 1      // Battery voltage on A1
- # define BATTERY_CURR_PIN 2      // Battery current on A2
 #elif CONFIG_HAL_BOARD == HAL_BOARD_PX4
  # define LED_ON           LOW
  # define LED_OFF          HIGH
- # define BATTERY_VOLT_PIN -1
- # define BATTERY_CURR_PIN -1
 #elif CONFIG_HAL_BOARD == HAL_BOARD_FLYMAPLE
- # define BATTERY_VOLT_PIN      20
- # define BATTERY_CURR_PIN      19
  # define LED_ON           LOW
  # define LED_OFF          HIGH
 #elif CONFIG_HAL_BOARD == HAL_BOARD_LINUX
- # define BATTERY_VOLT_PIN      -1
- # define BATTERY_CURR_PIN      -1
  # define LED_ON           LOW
  # define LED_OFF          HIGH
 #elif CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
  # define LED_ON           HIGH
  # define LED_OFF          LOW
- # define BATTERY_VOLT_PIN     6      // Battery voltage on A0
- # define BATTERY_CURR_PIN      200      // Battery current on A1
  # define CONFIG_SONAR_SOURCE_ANALOG_PIN 47
 #endif
 
@@ -421,6 +407,11 @@
 #define FS_GCS_ENABLED_ALWAYS_RTL           1
 #define FS_GCS_ENABLED_CONTINUE_MISSION     2
 
+// pre-arm check max velocity
+#ifndef PREARM_MAX_VELOCITY_CMS
+ # define PREARM_MAX_VELOCITY_CMS           50.0f   // vehicle must be travelling under 50cm/s before arming
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 //  MAGNETOMETER
 #ifndef MAGNETOMETER
@@ -478,7 +469,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //  Auto Tuning
 #ifndef AUTOTUNE
- # define AUTOTUNE  DISABLED
+ # define AUTOTUNE  ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -539,20 +530,6 @@
 #ifndef LAND_DETECTOR_TRIGGER
  # define LAND_DETECTOR_TRIGGER 50    // number of 50hz iterations with near zero climb rate and low throttle that triggers landing complete.
 #endif
-
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-// STARTUP BEHAVIOUR
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
-//////////////////////////////////////////////////////////////////////////////
-// GROUND_START_DELAY
-//
-#ifndef GROUND_START_DELAY
- # define GROUND_START_DELAY             3
-#endif
-
 
 //////////////////////////////////////////////////////////////////////////////
 // CAMERA TRIGGER AND CONTROL
@@ -805,10 +782,6 @@
  # define STABILIZE_PITCH_IMAX   	0
 #endif
 
-#ifndef STABILIZE_RATE_LIMIT
- # define STABILIZE_RATE_LIMIT      18000
-#endif
-
 #ifndef  STABILIZE_YAW_P
  # define STABILIZE_YAW_P           4.5f            // increase for more aggressive Yaw Hold, decrease if it's bouncy
 #endif
@@ -832,6 +805,9 @@
 #endif
 #ifndef DEFAULT_ANGLE_MAX
  # define DEFAULT_ANGLE_MAX         4500            // ANGLE_MAX parameters default value
+#endif
+#ifndef ANGLE_RATE_MAX
+ # define ANGLE_RATE_MAX            18000           // default maximum rotation rate in roll/pitch axis requested by angle controller used in stabilize, loiter, rtl, auto flight modes
 #endif
 #ifndef RATE_ROLL_P
  # define RATE_ROLL_P        		0.150f
