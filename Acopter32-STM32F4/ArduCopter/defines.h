@@ -33,6 +33,7 @@
 #define ROLL_PITCH_TOY              4       // THOR This is the Roll and Pitch mode
 #define ROLL_PITCH_LOITER           5       // pilot inputs the desired horizontal velocities
 #define ROLL_PITCH_SPORT            6       // pilot inputs roll, pitch rotation rates in earth frame
+#define ROLL_PITCH_AUTOTUNE         7       // description of new roll-pitch mode
 
 #define THROTTLE_MANUAL                     0   // manual throttle mode - pilot input goes directly to motors
 #define THROTTLE_MANUAL_TILT_COMPENSATED    1   // mostly manual throttle but with some tilt compensation
@@ -68,6 +69,8 @@
 #define AUX_SWITCH_ACRO_TRAINER     14      // low = disabled, middle = leveled, high = leveled and limited
 #define AUX_SWITCH_SPRAYER          15      // enable/disable the crop sprayer
 #define AUX_SWITCH_AUTO             16      // change to auto flight mode
+#define AUX_SWITCH_AUTOTUNE         17      // auto tune
+#define AUX_SWITCH_LAND             18      // change to LAND flight mode
 
 // values used by the ap.ch7_opt and ap.ch8_opt flags
 #define AUX_SWITCH_LOW              0       // indicates auxiliar switch is in the low position (pwm <1200)
@@ -75,13 +78,14 @@
 #define AUX_SWITCH_HIGH             2       // indicates auxiliar switch is in the high position (pwm >1800)
 
 // Frame types
-#define QUAD_FRAME 0
-#define TRI_FRAME 1
-#define HEXA_FRAME 2
-#define Y6_FRAME 3
-#define OCTA_FRAME 4
-#define HELI_FRAME 5
-#define OCTA_QUAD_FRAME 6
+#define UNDEFINED_FRAME 0
+#define QUAD_FRAME 1
+#define TRI_FRAME 2
+#define HEXA_FRAME 3
+#define Y6_FRAME 4
+#define OCTA_FRAME 5
+#define HELI_FRAME 6
+#define OCTA_QUAD_FRAME 7
 
 #define PLUS_FRAME 0
 #define X_FRAME 1
@@ -255,6 +259,7 @@ enum ap_message {
     MSG_RAW_IMU2,
     MSG_RAW_IMU3,
     MSG_GPS_RAW,
+    MSG_SYSTEM_TIME,
     MSG_SERVO_OUT,
     MSG_NEXT_WAYPOINT,
     MSG_NEXT_PARAM,
@@ -291,8 +296,10 @@ enum ap_message {
 #define LOG_DATA_INT32_MSG              0x16
 #define LOG_DATA_UINT32_MSG             0x17
 #define LOG_DATA_FLOAT_MSG              0x18
+#define LOG_AUTOTUNE_MSG                0x19
+#define LOG_AUTOTUNEDETAILS_MSG         0x1A
 #if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
- # define LOG_DATA_INT8_MSG              	0x1A
+ # define LOG_DATA_INT8_MSG              	0x1B
 #endif
 #define LOG_INDEX_MSG                   0xF0
 #define MAX_NUM_LOGS                    50
@@ -334,15 +341,17 @@ enum ap_message {
 #define DATA_SET_HOME                   25
 #define DATA_SET_SIMPLE_ON              26
 #define DATA_SET_SIMPLE_OFF             27
-#define DATA_SET_SUPERSIMPLE_ON         28
+#define DATA_SET_SUPERSIMPLE_ON         29
+#define DATA_AUTOTUNE_INITIALISED       30
+#define DATA_AUTOTUNE_OFF               31
+#define DATA_AUTOTUNE_RESTART           32
+#define DATA_AUTOTUNE_COMPLETE          33
+#define DATA_AUTOTUNE_ABANDONED         34
+#define DATA_AUTOTUNE_REACHED_LIMIT     35
+#define DATA_AUTOTUNE_TESTING           36
+#define DATA_AUTOTUNE_SAVEDGAINS        37
 
-// battery monitoring macros
-#define BATTERY_VOLTAGE(x) (x->voltage_average()*g.volt_div_ratio)
-#define CURRENT_AMPS(x) (x->voltage_average()-CURR_AMPS_OFFSET)*g.curr_amp_per_volt
 
-#define BATT_MONITOR_DISABLED               0
-#define BATT_MONITOR_VOLTAGE_ONLY           3
-#define BATT_MONITOR_VOLTAGE_AND_CURRENT    4
 
 /* ************************************************************** */
 /* Expansion PIN's that people can use for various things. */
@@ -423,6 +432,8 @@ enum ap_message {
 #define CONFIG_IMU_MPU6000 2
 #define CONFIG_IMU_SITL    3
 #define CONFIG_IMU_PX4     4
+#define CONFIG_IMU_FLYMAPLE 5
+#define CONFIG_IMU_MPU6000EXT 6
 
 #define AP_BARO_BMP085    1
 #define AP_BARO_MS5611    2
@@ -441,7 +452,9 @@ enum ap_message {
 #define ERROR_SUBSYSTEM_FAILSAFE_GPS        7
 #define ERROR_SUBSYSTEM_FAILSAFE_GCS        8
 #define ERROR_SUBSYSTEM_FAILSAFE_FENCE      9
-#define ERROR_SUBSYSTEM_FLGHT_MODE          10
+#define ERROR_SUBSYSTEM_FLIGHT_MODE         10
+#define ERROR_SUBSYSTEM_GPS                 11
+#define ERROR_SUBSYSTEM_CRASH_CHECK         12
 // general error codes
 #define ERROR_CODE_ERROR_RESOLVED           0
 #define ERROR_CODE_FAILED_TO_INITIALISE     1
@@ -452,7 +465,12 @@ enum ap_message {
 #define ERROR_CODE_FAILSAFE_OCCURRED        1
 // subsystem specific error codes -- compass
 #define ERROR_CODE_COMPASS_FAILED_TO_READ   2
-
+// subsystem specific error codes -- gps
+#define ERROR_CODE_GPS_GLITCH               2
+// subsystem specific error codes -- main
+#define ERROR_CODE_MAIN_INS_DELAY           1
+// subsystem specific error codes -- crash checker
+#define ERROR_CODE_CRASH_CHECK_CRASH        1
 
 
 #endif // _DEFINES_H

@@ -35,6 +35,8 @@ void set_simple_mode(uint8_t b)
         }else if(b == 1){
             Log_Write_Event(DATA_SET_SIMPLE_ON);
         }else{
+            // initialise super simple heading
+            update_super_simple_bearing(true);
             Log_Write_Event(DATA_SET_SUPERSIMPLE_ON);
         }
         ap.simple_mode = b;
@@ -46,13 +48,13 @@ static void set_failsafe_radio(bool b)
 {
     // only act on changes
     // -------------------
-    if(ap.failsafe_radio != b) {
+    if(failsafe.radio != b) {
 
         // store the value so we don't trip the gate twice
         // -----------------------------------------------
-        ap.failsafe_radio = b;
+        failsafe.radio = b;
 
-        if (ap.failsafe_radio == false) {
+        if (failsafe.radio == false) {
             // We've regained radio contact
             // ----------------------------
             failsafe_radio_off_event();
@@ -69,9 +71,9 @@ static void set_failsafe_radio(bool b)
 
 
 // ---------------------------------------------
-void set_low_battery(bool b)
+void set_failsafe_battery(bool b)
 {
-    ap.low_battery = b;
+    failsafe.battery = b;
     AP_Notify::flags.failsafe_battery = b;
 }
 
@@ -79,13 +81,16 @@ void set_low_battery(bool b)
 // ---------------------------------------------
 static void set_failsafe_gps(bool b)
 {
-    ap.failsafe_gps = b;
+    failsafe.gps = b;
+
+    // update AP_Notify
+    AP_Notify::flags.failsafe_gps = b;
 }
 
 // ---------------------------------------------
 static void set_failsafe_gcs(bool b)
 {
-    ap.failsafe_gcs = b;
+    failsafe.gcs = b;
 }
 
 // ---------------------------------------------
@@ -114,22 +119,6 @@ void set_land_complete(bool b)
         Log_Write_Event(DATA_NOT_LANDED);
     }
     ap.land_complete = b;
-}
-
-// ---------------------------------------------
-
-void set_compass_healthy(bool b)
-{
-    if(ap.compass_status != b) {
-        if(b) {
-            // compass has just recovered so log to the dataflash
-            Log_Write_Error(ERROR_SUBSYSTEM_COMPASS,ERROR_CODE_ERROR_RESOLVED);
-        }else{
-            // compass has just failed so log an error to the dataflash
-            Log_Write_Error(ERROR_SUBSYSTEM_COMPASS,ERROR_CODE_COMPASS_FAILED_TO_READ);
-        }
-    }
-    ap.compass_status = b;
 }
 
 // ---------------------------------------------

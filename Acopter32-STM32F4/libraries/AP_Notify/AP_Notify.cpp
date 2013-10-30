@@ -23,11 +23,10 @@ struct AP_Notify::notify_type AP_Notify::flags;
 void AP_Notify::init(void)
 {
     boardled.init();
-#if CONFIG_HAL_BOARD == HAL_BOARD_APM1 || CONFIG_HAL_BOARD == HAL_BOARD_APM2 || CONFIG_HAL_BOARD == HAL_BOARD_PX4
-    toshibaled.init();
-#endif
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
     tonealarm.init();
+#elif CONFIG_HAL_BOARD != HAL_BOARD_VRBRAIN
+    toshibaled.init();
 #endif
 }
 
@@ -35,8 +34,7 @@ void AP_Notify::init(void)
 void AP_Notify::update(void)
 {
     boardled.update();
-
-#if CONFIG_HAL_BOARD == HAL_BOARD_APM1 || CONFIG_HAL_BOARD == HAL_BOARD_APM2 || CONFIG_HAL_BOARD == HAL_BOARD_PX4
+#if CONFIG_HAL_BOARD != HAL_BOARD_VRBRAIN
     toshibaled.update();
 #endif
 

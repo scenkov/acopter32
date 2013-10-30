@@ -32,21 +32,19 @@ void fence_check()
 
             // disarm immediately if we think we are on the ground
             // don't disarm if the high-altitude fence has been broken because it's likely the user has pulled their throttle to zero to bring it down
-            if(manual_flight_mode(control_mode) && g.rc_3.control_in == 0 && !ap.failsafe_radio && ((fence.get_breaches() & AC_FENCE_TYPE_ALT_MAX)== 0)){
+            if(manual_flight_mode(control_mode) && g.rc_3.control_in == 0 && !failsafe.radio && ((fence.get_breaches() & AC_FENCE_TYPE_ALT_MAX)== 0)){
                 init_disarm_motors();
             }else{
                 // if we have a GPS
                 if (GPS_ok()) {
                     // if we are within 100m of the fence, RTL
                     if( fence.get_breach_distance(new_breaches) <= AC_FENCE_GIVE_UP_DISTANCE) {
-                        if(control_mode != RTL) {
-                            set_mode(RTL);
+                        if (!set_mode(RTL)) {
+                            set_mode(LAND);
                         }
                     }else{
                         // if more than 100m outside the fence just force a land
-                        if(control_mode != LAND) {
-                            set_mode(LAND);
-                        }
+                        set_mode(LAND);
                     }
                 }else{
                     // we have no GPS so LAND

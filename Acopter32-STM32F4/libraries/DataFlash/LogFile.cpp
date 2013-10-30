@@ -92,6 +92,7 @@ void DataFlash_Block::get_log_boundaries(uint16_t log_num, uint16_t & start_page
 
     if (df_BufferIdx != 0) {
         FinishWrite();
+        hal.scheduler->delay(100);
     }
 
     if(num == 1)
@@ -410,6 +411,7 @@ void DataFlash_Block::LogReadProcess(uint16_t log_num,
 
     if (df_BufferIdx != 0) {
         FinishWrite();
+        hal.scheduler->delay(100);
     }
 
     StartRead(start_page);
@@ -441,7 +443,7 @@ void DataFlash_Block::LogReadProcess(uint16_t log_num,
 		}
         uint16_t new_page = GetPage();
         if (new_page != page) {
-            if (new_page == end_page || new_page == start_page) {
+            if (new_page == end_page+1 || new_page == start_page) {
                 return;
             }
             page = new_page;
@@ -604,7 +606,8 @@ void DataFlash_Class::Log_Write_GPS(const GPS *gps, int32_t relative_alt)
     struct log_GPS pkt = {
         LOG_PACKET_HEADER_INIT(LOG_GPS_MSG),
     	status        : (uint8_t)gps->status(),
-    	gps_time      : gps->time,
+    	gps_week_ms   : gps->time_week_ms,
+    	gps_week      : gps->time_week,
         num_sats      : gps->num_sats,
         hdop          : gps->hdop,
         latitude      : gps->latitude,

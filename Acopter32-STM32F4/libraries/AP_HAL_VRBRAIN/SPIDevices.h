@@ -7,6 +7,8 @@
 #include <spi.h>
 #include <boards.h>
 
+
+
 typedef enum SPIFrequency {
     SPI_18MHZ       = 0, /**< 18 MHz */
     SPI_9MHZ        = 1, /**< 9 MHz */
@@ -51,6 +53,7 @@ static const spi_pins board_spi_pins[] __FLASH__ = {
      BOARD_SPI3_MOSI_PIN}
 };
 
+
 class VRBRAIN::VRBRAINSPI1DeviceDriver : public AP_HAL::SPIDeviceDriver {
 public:
     VRBRAINSPI1DeviceDriver(uint8_t cs_pin)
@@ -68,7 +71,7 @@ public:
     void cs_release();
     uint8_t transfer(uint8_t data);
     void transfer(const uint8_t *data, uint16_t len);
-
+    void set_bus_speed(enum bus_speed speed);
 private:
     void _cs_assert();
     void _cs_release();
@@ -103,7 +106,7 @@ public:
     void cs_release();
     uint8_t transfer(uint8_t data);
     void transfer(const uint8_t *data, uint16_t len);
-
+    void set_bus_speed(enum bus_speed speed);
 
 private:
     void _cs_assert();
@@ -138,7 +141,7 @@ public:
     void cs_release();
     uint8_t transfer(uint8_t data);
     void transfer(const uint8_t *data, uint16_t len);
-
+    void set_bus_speed(enum bus_speed speed);
 
 private:
     void _cs_assert();
@@ -153,6 +156,5 @@ private:
     spi_dev *_dev;
     uint8_t _cs_pin;
 };
-
 
 #endif // __AP_HAL_VRBRAIN_SPI_DEVICES_H__

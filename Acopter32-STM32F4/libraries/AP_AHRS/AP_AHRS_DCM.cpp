@@ -7,11 +7,19 @@
  *       Based on DCM code by Doug Weibel, Jordi Muñoz and Jose Julio. DIYDrones.com
  *
  *       Adapted for the general ArduPilot AHRS interface by Andrew Tridgell
- *
- *       This library is free software; you can redistribute it and/or
- *       modify it under the terms of the GNU Lesser General Public License
- *       as published by the Free Software Foundation; either version 2.1
- *       of the License, or (at your option) any later version.
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <AP_AHRS.h>
 #include <AP_HAL.h>
@@ -281,7 +289,7 @@ bool AP_AHRS_DCM::have_gps(void) const
 }
 
 // return true if we should use the compass for yaw correction
-bool AP_AHRS_DCM::use_compass(void) const
+bool AP_AHRS_DCM::use_compass(void)
 {
     if (!_compass || !_compass->use_for_yaw()) {
         // no compass available
@@ -302,8 +310,13 @@ bool AP_AHRS_DCM::use_compass(void) const
     // prevent flyaways with very bad compass offsets
     int32_t error = abs(wrap_180_cd(yaw_sensor - _gps->ground_course_cd));
     if (error > 4500 && _wind.length() < _gps->ground_speed_cm*0.008f) {
-        // start using the GPS for heading
-        return false;
+        if (hal.scheduler->millis() - _last_consistent_heading > 2000) {
+            // start using the GPS for heading if the compass has been
+            // inconsistent with the GPS for 2 seconds
+            return false;
+        }
+    } else {
+        _last_consistent_heading = hal.scheduler->millis();
     }
 
     // use the compass

@@ -31,11 +31,13 @@ get_stabilize_roll(int32_t target_angle)
     // angle error
     target_angle = wrap_180_cd(target_angle - ahrs.roll_sensor);
 
-    // limit the error we're feeding to the PID
-    target_angle = constrain_int32(target_angle, -g.angle_max, g.angle_max);
-
     // convert to desired rate
     int32_t target_rate = g.pi_stabilize_roll.kP() * target_angle;
+
+    // constrain the target rate
+    if (!ap.disable_stab_rate_limit) {
+        target_rate = constrain_int32(target_rate, -g.angle_rate_max, g.angle_rate_max);
+    }
 
     // set targets for rate controller
     set_roll_rate_target(target_rate, EARTH_FRAME);
@@ -47,11 +49,13 @@ get_stabilize_pitch(int32_t target_angle)
     // angle error
     target_angle            = wrap_180_cd(target_angle - ahrs.pitch_sensor);
 
-    // limit the error we're feeding to the PID
-    target_angle            = constrain_int32(target_angle, -g.angle_max, g.angle_max);
-
     // convert to desired rate
     int32_t target_rate = g.pi_stabilize_pitch.kP() * target_angle;
+
+    // constrain the target rate
+    if (!ap.disable_stab_rate_limit) {
+        target_rate = constrain_int32(target_rate, -g.angle_rate_max, g.angle_rate_max);
+    }
 
     // set targets for rate controller
     set_pitch_rate_target(target_rate, EARTH_FRAME);
@@ -1085,7 +1089,6 @@ static int16_t get_pilot_desired_throttle(int16_t throttle_control)
 // get_pilot_desired_climb_rate - transform pilot's throttle input to
 // climb rate in cm/s.  we use radio_in instead of control_in to get the full range
 // without any deadzone at the bottom
-#define THROTTLE_IN_DEADBAND 100        // the throttle input channel's deadband in PWM
 #define THROTTLE_IN_DEADBAND_TOP (THROTTLE_IN_MIDDLE+THROTTLE_IN_DEADBAND)  // top of the deadband
 #define THROTTLE_IN_DEADBAND_BOTTOM (THROTTLE_IN_MIDDLE-THROTTLE_IN_DEADBAND)  // bottom of the deadband
 static int16_t get_pilot_desired_climb_rate(int16_t throttle_control)
@@ -1093,7 +1096,7 @@ static int16_t get_pilot_desired_climb_rate(int16_t throttle_control)
     int16_t desired_rate = 0;
 
     // throttle failsafe check
-    if( ap.failsafe_radio ) {
+    if( failsafe.radio ) {
         return 0;
     }
 
@@ -1297,7 +1300,7 @@ get_throttle_land()
         get_throttle_rate_stabilized(-abs(g.land_speed));
 
         // disarm when the landing detector says we've landed and throttle is at min (or we're in failsafe so we have no pilot thorottle input)
-        if( ap.land_complete && (g.rc_3.control_in == 0 || ap.failsafe_radio) ) {
+        if( ap.land_complete && (g.rc_3.control_in == 0 || failsafe.radio) ) {
             init_disarm_motors();
         }
     }
@@ -1378,12 +1381,8 @@ get_throttle_surface_tracking(int16_t target_rate)
 static void reset_I_all(void)
 {
     reset_rate_I();
-    reset_stability_I();
     reset_throttle_I();
     reset_optflow_I();
-
-    // This is the only place we reset Yaw
-    g.pi_stabilize_yaw.reset_I();
 }
 
 static void reset_rate_I()
@@ -1405,7 +1404,6 @@ static void reset_throttle_I(void)
 {
     // For Altitude Hold
     g.pi_alt_hold.reset_I();
-    g.pid_throttle_rate.reset_I();
     g.pid_throttle_accel.reset_I();
 }
 
@@ -1413,12 +1411,4 @@ static void set_accel_throttle_I_from_pilot_throttle(int16_t pilot_throttle)
 {
     // shift difference between pilot's throttle and hover throttle into accelerometer I
     g.pid_throttle_accel.set_integrator(pilot_throttle-g.throttle_cruise);
-}
-
-static void reset_stability_I(void)
-{
-    // Used to balance a quad
-    // This only needs to be reset during Auto-leveling in flight
-    g.pi_stabilize_roll.reset_I();
-    g.pi_stabilize_pitch.reset_I();
 }

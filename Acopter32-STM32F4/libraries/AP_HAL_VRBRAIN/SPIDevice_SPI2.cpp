@@ -98,6 +98,18 @@ void VRBRAINSPI2DeviceDriver::transfer(const uint8_t *tx, uint16_t len) {
     }
 }
 
+
+void VRBRAINSPI2DeviceDriver::set_bus_speed(VRBRAINSPI2DeviceDriver::bus_speed speed)
+{
+    if (speed == VRBRAINSPI2DeviceDriver::SPI_SPEED_HIGH) {
+
+    } else {
+
+    }
+}
+
+
+
 void VRBRAINSPI2DeviceDriver::cs_assert() {
     _cs_assert();
 }
@@ -113,11 +125,9 @@ const spi_pins* VRBRAINSPI2DeviceDriver::dev_to_spi_pins(spi_dev *dev) {
        return board_spi_pins;
     else if (dev->SPIx == SPI2)
        return board_spi_pins + 1;
-#ifdef STM32_HIGH_DENSITY
     else if (_dev->SPIx == SPI3)
 	  return board_spi_pins + 2;
-#endif
-	else
+    else
 	{
 	  assert_param(0);
 	  return NULL;

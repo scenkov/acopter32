@@ -24,16 +24,6 @@ public:
 
   bool tx_pending();
 
-  /* VRBRAIN implementations of BetterStream virtual methods */
-  void print_P(const prog_char_t *pstr);
-  void println_P(const prog_char_t *pstr);
-  void printf(const char *pstr, ...);
-  void _printf_P(const prog_char *pstr, ...);
-
-  void vprintf(const char* fmt, va_list ap);
-  void vprintf_P(const prog_char* fmt, va_list ap);
-
-
 
   /* VRBRAIN implementations of Stream virtual methods */
   int16_t available();
@@ -42,10 +32,10 @@ public:
 
   /* Empty implementations of Print virtual methods */
   size_t write(uint8_t c);
+  size_t write(const uint8_t *buffer, size_t size);
 
 private:
-  void _vprintf(const char *fmt, va_list ap);
-  void _internal_vprintf(const char *fmt, va_list ap);
+
     struct usart_dev *_usart_device;
     uint8_t _usb;
     uint8_t _usb_present;

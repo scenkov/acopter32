@@ -96,13 +96,13 @@ bool AP_Compass_HMC5843::read_raw()
     }
 
     int16_t rx, ry, rz;
-    rx = (int16_t)(buff[0] << 8) | buff[1];
+    rx = (((int16_t)buff[0]) << 8) | buff[1];
     if (product_id == AP_COMPASS_TYPE_HMC5883L) {
-        rz = (int16_t)(buff[2] << 8) | buff[3];
-        ry = (int16_t)(buff[4] << 8) | buff[5];
+        rz = (((int16_t)buff[2]) << 8) | buff[3];
+        ry = (((int16_t)buff[4]) << 8) | buff[5];
     } else {
-        ry = (int16_t)(buff[2] << 8) | buff[3];
-        rz = (int16_t)(buff[4] << 8) | buff[5];
+        ry = (((int16_t)buff[2]) << 8) | buff[3];
+        rz = (((int16_t)buff[4]) << 8) | buff[5];
     }
     if (rx == -4096 || ry == -4096 || rz == -4096) {
         // no valid data available
@@ -120,13 +120,19 @@ bool AP_Compass_HMC5843::read_raw()
 // accumulate a reading from the magnetometer
 void AP_Compass_HMC5843::accumulate(void)
 {
+    if (!_initialised) {
+        // someone has tried to enable a compass for the first time
+        // mid-flight .... we can't do that yet (especially as we won't
+        // have the right orientation!)
+        return;
+    }
    uint32_t tnow = hal.scheduler->micros();
    if (healthy && _accum_count != 0 && (tnow - _last_accum_time) < 13333) {
 	  // the compass gets new data at 75Hz
 	  return;
    }
 
-   if (!_i2c_sem->take(5)) {
+   if (!_i2c_sem->take(1)) {
        // the bus is busy - try again later
        return;
    }
@@ -186,6 +192,7 @@ AP_Compass_HMC5843::init()
     }
 
     // determine if we are using 5843 or 5883L
+    _base_config = 0;
     if (!write_register(ConfigRegA, SampleAveraging_8<<5 | DataOutputRate_75HZ<<2 | NormalOperation) ||
         !read_register(ConfigRegA, &_base_config)) {
         healthy = false;
@@ -195,14 +202,12 @@ AP_Compass_HMC5843::init()
     if ( _base_config == (SampleAveraging_8<<5 | DataOutputRate_75HZ<<2 | NormalOperation)) {
         // a 5883L supports the sample averaging config
         product_id = AP_COMPASS_TYPE_HMC5883L;
-        hal.console->println("Compass TYPE: HMC5883L" );
         calibration_gain = 0x60;
         expected_x = 766;
         expected_yz  = 713;
         gain_multiple = 660.0 / 1090;  // adjustment for runtime vs calibration gain
     } else if (_base_config == (NormalOperation | DataOutputRate_75HZ<<2)) {
         product_id = AP_COMPASS_TYPE_HMC5843;
-        hal.console->println("Compass TYPE: HMC5843" );
     } else {
         // not behaving like either supported compass type
         _i2c_sem->give();
@@ -252,19 +257,8 @@ AP_Compass_HMC5843::init()
 
 #if 0
         /* useful for debugging */
-        hal.console->printf_P("mag_x: ");
-        hal.console->printf_P("%d",_mag_x);
-        hal.console->printf_P(" mag_y: ");
-        hal.console->printf_P("%d",_mag_y);
-        hal.console->printf_P(" mag_z: ");
-        hal.console->printf_P("%d",_mag_z);
-        hal.console->println();
-        hal.console->printf_P("CalX: ");
-        hal.console->printf_P("%f",(float)(calibration[0]/good_count));
-        hal.console->printf_P(" CalY: ");
-        hal.console->printf_P("%f",(float)(calibration[1]/good_count));
-        hal.console->printf_P(" CalZ: ");
-        hal.console->printf_P("%f",(float)(calibration[2]/good_count));
+        hal.console->printf_P(PSTR("MagX: %d MagY: %d MagZ: %d\n"), (int)_mag_x, (int)_mag_y, (int)_mag_z);
+        hal.console->printf_P(PSTR("CalX: %.2f CalY: %.2f CalZ: %.2f\n"), cal[0], cal[1], cal[2]);
 #endif
     }
 

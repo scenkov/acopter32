@@ -26,7 +26,7 @@ extern const AP_HAL::HAL& hal;
 
 const AP_Param::GroupInfo AP_RollController::var_info[] PROGMEM = {
 	// @Param: T_CONST
-	// @DisplayName: Pitch Time Constant
+	// @DisplayName: Roll Time Constant
 	// @Description: This controls the time constant in seconds from demanded to achieved bank angle. A value of 0.5 is a good default and will work with nearly all models. Advanced users may want to reduce this time to obtain a faster response but there is no point setting a time less than the aircraft can achieve.
 	// @Range: 0.4 1.0
 	// @Units: seconds
@@ -44,7 +44,7 @@ const AP_Param::GroupInfo AP_RollController::var_info[] PROGMEM = {
 
 	// @Param: D
 	// @DisplayName: Damping Gain
-	// @Description: This is the gain from roll rate to aileron. This adjusts the damping of the roll control loop. It has the same effect as RLL2SRV_D in the old PID controller but without the spikes in servo demands. This gain helps to reduce rolling in turbulence. It should be increased in 0.01 increments as too high a value can lead to a high frequency pitch oscillation that could overstress the airframe.
+	// @Description: This is the gain from roll rate to aileron. This adjusts the damping of the roll control loop. It has the same effect as RLL2SRV_D in the old PID controller but without the spikes in servo demands. This gain helps to reduce rolling in turbulence. It should be increased in 0.01 increments as too high a value can lead to a high frequency roll oscillation that could overstress the airframe.
 	// @Range: 0 0.1
 	// @Increment: 0.01
 	// @User: User
@@ -69,7 +69,7 @@ const AP_Param::GroupInfo AP_RollController::var_info[] PROGMEM = {
 
 	// @Param: IMAX
 	// @DisplayName: Integrator limit
-	// @Description: This limits the number of degrees of aileron in centi-dgrees over which the integrator will operate. At the default setting of 1500 centi-degrees, the integrator will be limited to +- 15 degrees of servo travel. The maximum servo deflection is +- 45 centi-degrees, so the default value represents a 1/3rd of the total control throw which is adequate unless the aircraft is severely out of trim.
+	// @Description: This limits the number of degrees of aileron in centi-degrees over which the integrator will operate. At the default setting of 1500 centi-degrees, the integrator will be limited to +- 15 degrees of servo travel. The maximum servo deflection is +- 45 centi-degrees, so the default value represents a 1/3rd of the total control throw which is adequate unless the aircraft is severely out of trim.
 	// @Range: 0 4500
 	// @Increment: 1
 	// @User: Advanced
@@ -117,12 +117,14 @@ int32_t AP_RollController::_get_rate_out(float desired_rate, float scaler, bool 
         aspeed = 0.0f;
     }
 
-	// Multiply roll rate error by _ki_rate and integrate
+	// Multiply roll rate error by _ki_rate, apply scaler and integrate
+	// Scaler is applied before integrator so that integrator state relates directly to aileron deflection
+	// This means aileron trim offset doesn't change as the value of scaler changes with airspeed
 	// Don't integrate if in stabilise mode as the integrator will wind up against the pilots inputs
 	if (!disable_integrator && ki_rate > 0) {
 		//only integrate if gain and time step are positive and airspeed above min value.
 		if (dt > 0 && aspeed > float(aparm.airspeed_min)) {
-		    float integrator_delta = rate_error * ki_rate * delta_time;
+		    float integrator_delta = rate_error * ki_rate * delta_time * scaler;
 			// prevent the integrator from increasing if surface defln demand is above the upper limit
 			if (_last_out < -45) {
                 integrator_delta = max(integrator_delta , 0);
@@ -137,7 +139,7 @@ int32_t AP_RollController::_get_rate_out(float desired_rate, float scaler, bool 
 	}
 	
     // Scale the integration limit
-    float intLimScaled = _imax * 0.01f / scaler;
+    float intLimScaled = _imax * 0.01f;
 
     // Constrain the integrator state
     _integrator = constrain_float(_integrator, -intLimScaled, intLimScaled);
@@ -146,7 +148,7 @@ int32_t AP_RollController::_get_rate_out(float desired_rate, float scaler, bool 
 	// Note the scaler is applied again. We want a 1/speed scaler applied to the feed-forward
 	// path, but want a 1/speed^2 scaler applied to the rate error path. 
 	// This is because acceleration scales with speed^2, but rate scales with speed.
-	_last_out = ( (rate_error * _K_D) + _integrator + (desired_rate * kp_ff) ) * scaler;
+	_last_out = ( (rate_error * _K_D) + (desired_rate * kp_ff) ) * scaler + _integrator;
 	
 	// Convert to centi-degrees and constrain
 	return constrain_float(_last_out * 100, -4500, 4500);
@@ -162,7 +164,7 @@ int32_t AP_RollController::_get_rate_out(float desired_rate, float scaler, bool 
 */
 int32_t AP_RollController::get_rate_out(float desired_rate, float scaler)
 {
-    return _get_rate_out(desired_rate, scaler, true);
+    return _get_rate_out(desired_rate, scaler, false);
 }
 
 /*

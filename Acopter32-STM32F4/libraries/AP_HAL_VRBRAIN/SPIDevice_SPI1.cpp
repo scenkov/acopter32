@@ -22,7 +22,7 @@ void VRBRAINSPI1DeviceDriver::init() {
     hal.gpio->write(_cs_pin, HIGH);
 
     //set frequency
-    SPIFrequency freq = SPI_1_125MHZ;
+    SPIFrequency freq = SPI_9MHZ;
     spi_baud_rate baud = determine_baud_rate(freq);
 
     //set mode
@@ -98,6 +98,15 @@ void VRBRAINSPI1DeviceDriver::transfer(const uint8_t *tx, uint16_t len) {
     }
 }
 
+void VRBRAINSPI1DeviceDriver::set_bus_speed(VRBRAINSPI1DeviceDriver::bus_speed speed)
+{
+    if (speed == VRBRAINSPI1DeviceDriver::SPI_SPEED_HIGH) {
+
+    } else {
+
+    }
+}
+
 void VRBRAINSPI1DeviceDriver::cs_assert() {
     _cs_assert();
 }
@@ -112,10 +121,8 @@ const spi_pins* VRBRAINSPI1DeviceDriver::dev_to_spi_pins(spi_dev *dev) {
        return board_spi_pins;
     else if (dev->SPIx == SPI2)
        return board_spi_pins + 1;
-#ifdef STM32_HIGH_DENSITY
     else if (_dev->SPIx == SPI3)
 	  return board_spi_pins + 2;
-#endif
 	else
 	{
 	  assert_param(0);
@@ -153,25 +160,25 @@ const spi_baud_rate VRBRAINSPI1DeviceDriver::determine_baud_rate(SPIFrequency fr
 	switch(freq)
 	{
 		case SPI_18MHZ:
-			rate = SPI_BAUD_PCLK_DIV_2;
-			break;
-		case SPI_9MHZ:
 			rate = SPI_BAUD_PCLK_DIV_4;
 			break;
-		case SPI_4_5MHZ:
+		case SPI_9MHZ:
 			rate = SPI_BAUD_PCLK_DIV_8;
 			break;
-		case SPI_2_25MHZ:
+		case SPI_4_5MHZ:
 			rate = SPI_BAUD_PCLK_DIV_16;
 			break;
-		case SPI_1_125MHZ:
+		case SPI_2_25MHZ:
 			rate = SPI_BAUD_PCLK_DIV_32;
 			break;
-		case SPI_562_500KHZ:
+		case SPI_1_125MHZ:
 			rate = SPI_BAUD_PCLK_DIV_64;
 			break;
-		case SPI_281_250KHZ:
+		case SPI_562_500KHZ:
 			rate = SPI_BAUD_PCLK_DIV_128;
+			break;
+		case SPI_281_250KHZ:
+			rate = SPI_BAUD_PCLK_DIV_256;
 			break;
 		case SPI_140_625KHZ:
 			rate = SPI_BAUD_PCLK_DIV_256;

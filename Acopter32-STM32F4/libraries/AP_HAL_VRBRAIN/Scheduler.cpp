@@ -9,11 +9,11 @@ using namespace VRBRAIN;
 
 extern const AP_HAL::HAL& hal;
 
-AP_HAL::TimedProc VRBRAINScheduler::_failsafe = NULL;
+AP_HAL::Proc VRBRAINScheduler::_failsafe = NULL;
 volatile bool VRBRAINScheduler::_timer_suspended = false;
 volatile bool VRBRAINScheduler::_timer_event_missed = false;
 volatile bool VRBRAINScheduler::_in_timer_proc = false;
-AP_HAL::TimedProc VRBRAINScheduler::_timer_proc[VRBRAIN_SCHEDULER_MAX_TIMER_PROCS] = {NULL};
+AP_HAL::MemberProc VRBRAINScheduler::_timer_proc[VRBRAIN_SCHEDULER_MAX_TIMER_PROCS] = {NULL};
 uint8_t VRBRAINScheduler::_num_timer_procs = 0;
 uint32 VRBRAINScheduler::_scheduler_last_call = 0;
 uint16_t VRBRAINScheduler::_scheduler_led = 0;
@@ -100,7 +100,7 @@ void VRBRAINScheduler::register_delay_callback(AP_HAL::Proc proc,
     _min_delay_cb_ms = min_time_ms;
 }
 
-void VRBRAINScheduler::register_timer_process(AP_HAL::TimedProc proc)
+void VRBRAINScheduler::register_timer_process(AP_HAL::MemberProc proc)
 {
     for (int i = 0; i < _num_timer_procs; i++) {
         if (_timer_proc[i] == proc) {
@@ -120,13 +120,12 @@ void VRBRAINScheduler::register_timer_process(AP_HAL::TimedProc proc)
     }
 }
 
-void VRBRAINScheduler::register_io_process(AP_HAL::TimedProc proc) 
+void VRBRAINScheduler::register_io_process(AP_HAL::MemberProc proc) 
 {
     // IO processes not supported on AVR
 }
 
-void VRBRAINScheduler::register_timer_failsafe(
-        AP_HAL::TimedProc failsafe, uint32_t period_us) {
+void VRBRAINScheduler::register_timer_failsafe(AP_HAL::Proc failsafe, uint32_t period_us) {
     /* XXX Assert period_us == 1000 */
     _failsafe = failsafe;
 }
@@ -179,33 +178,16 @@ void VRBRAINScheduler::_timer_isr_event() {
 
 void VRBRAINScheduler::_run_timer_procs(bool called_from_isr) {
 
-    uint32_t tnow = hal.scheduler->micros();
-
-
     if (_in_timer_proc) {
-        // the timer calls took longer than the period of the
-        // timer. This is bad, and may indicate a serious
-        // driver failure. We can't just call the drivers
-        // again, as we could run out of stack. So we only
-        // call the _failsafe call. It's job is to detect if
-        // the drivers or the main loop are indeed dead and to
-        // activate whatever failsafe it thinks may help if
-        // need be.  We assume the failsafe code can't
-        // block. If it does then we will recurse and die when
-        // we run out of stack
-        if (_failsafe != NULL) {
-            _failsafe(tnow);
-        }
         return;
     }
-
     _in_timer_proc = true;
 
     if (!_timer_suspended) {
         // now call the timer based drivers
         for (int i = 0; i < _num_timer_procs; i++) {
             if (_timer_proc[i] != NULL) {
-                _timer_proc[i](tnow);
+                _timer_proc[i]();
             }
         }
     } else if (called_from_isr) {
@@ -214,7 +196,7 @@ void VRBRAINScheduler::_run_timer_procs(bool called_from_isr) {
 
     // and the failsafe, if one is setup
     if (_failsafe != NULL) {
-        _failsafe(tnow);
+        _failsafe();
     }
 
     _in_timer_proc = false;

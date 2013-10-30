@@ -9,7 +9,7 @@ static void read_control_switch()
 
     // has switch moved?
     // ignore flight mode changes if in failsafe
-    if (oldSwitchPosition != switchPosition && !ap.failsafe_radio) {
+    if (oldSwitchPosition != switchPosition && !failsafe.radio && failsafe.radio_counter == 0) {
         switch_counter++;
         if(switch_counter >= CONTROL_SWITCH_COUNTER) {
             oldSwitchPosition       = switchPosition;
@@ -21,7 +21,11 @@ static void read_control_switch()
                 if(g.ch7_option != AUX_SWITCH_SIMPLE_MODE && g.ch8_option != AUX_SWITCH_SIMPLE_MODE && g.ch7_option != AUX_SWITCH_SUPERSIMPLE_MODE && g.ch8_option != AUX_SWITCH_SUPERSIMPLE_MODE) {
                     // set Simple mode using stored paramters from Mission planner
                     // rather than by the control switch
-                    set_simple_mode(BIT_IS_SET(g.simple_modes, switchPosition));
+                    if (BIT_IS_SET(g.super_simple, switchPosition)) {
+                        set_simple_mode(2);
+                    }else{
+                        set_simple_mode(BIT_IS_SET(g.simple_modes, switchPosition));
+                    }
                 }
             }
 
@@ -62,24 +66,29 @@ static void read_aux_switches()
 {
     uint8_t switch_position;
 
+    // exit immediately during radio failsafe
+    if (failsafe.radio || failsafe.radio_counter != 0) {
+        return;
+    }
+
     // check if ch7 switch has changed position
     switch_position = read_3pos_switch(g.rc_7.radio_in);
-    if (ap_system.CH7_flag != switch_position) {
+    if (ap.CH7_flag != switch_position) {
         // set the CH7 flag
-        ap_system.CH7_flag = switch_position;
+        ap.CH7_flag = switch_position;
 
         // invoke the appropriate function
-        do_aux_switch_function(g.ch7_option, ap_system.CH7_flag);
+        do_aux_switch_function(g.ch7_option, ap.CH7_flag);
     }
 
     // check if Ch8 switch has changed position
     switch_position = read_3pos_switch(g.rc_8.radio_in);
-    if (ap_system.CH8_flag != switch_position) {
+    if (ap.CH8_flag != switch_position) {
         // set the CH8 flag
-        ap_system.CH8_flag = switch_position;
+        ap.CH8_flag = switch_position;
 
         // invoke the appropriate function
-        do_aux_switch_function(g.ch8_option, ap_system.CH8_flag);
+        do_aux_switch_function(g.ch8_option, ap.CH8_flag);
     }
 }
 
@@ -87,8 +96,8 @@ static void read_aux_switches()
 static void init_aux_switches()
 {
     // set the CH7 flag
-    ap_system.CH7_flag = read_3pos_switch(g.rc_7.radio_in);
-    ap_system.CH8_flag = read_3pos_switch(g.rc_8.radio_in);
+    ap.CH7_flag = read_3pos_switch(g.rc_7.radio_in);
+    ap.CH8_flag = read_3pos_switch(g.rc_8.radio_in);
 
     // init channel 7 options
     switch(g.ch7_option) {
@@ -99,7 +108,7 @@ static void init_aux_switches()
         case AUX_SWITCH_SUPERSIMPLE_MODE:
         case AUX_SWITCH_ACRO_TRAINER:
         case AUX_SWITCH_SPRAYER:
-            do_aux_switch_function(g.ch7_option, ap_system.CH7_flag);
+            do_aux_switch_function(g.ch7_option, ap.CH7_flag);
             break;
     }
     // init channel 8 option
@@ -111,7 +120,7 @@ static void init_aux_switches()
         case AUX_SWITCH_SUPERSIMPLE_MODE:
         case AUX_SWITCH_ACRO_TRAINER:
         case AUX_SWITCH_SPRAYER:
-            do_aux_switch_function(g.ch8_option, ap_system.CH8_flag);
+            do_aux_switch_function(g.ch8_option, ap.CH8_flag);
             break;
     }
 }
@@ -141,7 +150,12 @@ static void do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
             break;
 
         case AUX_SWITCH_SIMPLE_MODE:
+            // low = simple mode off, middle or high position turns simple mode on
+            set_simple_mode(ch_flag == AUX_SWITCH_HIGH || ch_flag == AUX_SWITCH_MIDDLE);
+            break;
+
         case AUX_SWITCH_SUPERSIMPLE_MODE:
+            // low = simple mode off, middle = simple mode, high = super simple mode
             set_simple_mode(ch_flag);
             break;
 
@@ -150,8 +164,8 @@ static void do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
                 // engage RTL (if not possible we remain in current flight mode)
                 set_mode(RTL);
             }else{
-                // disengage RTL to previous flight mode if we are currently in RTL or loiter
-                if (control_mode == RTL || control_mode == LOITER) {
+                // return to flight mode switch's flight mode if we are currently in RTL
+                if (control_mode == RTL) {
                     reset_control_switch();
                 }
             }
@@ -275,6 +289,42 @@ static void do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
         case AUX_SWITCH_AUTO:
             if (ch_flag == AUX_SWITCH_HIGH) {
                 set_mode(AUTO);
+            }else{
+                // return to flight mode switch's flight mode if we are currently in AUTO
+                if (control_mode == AUTO) {
+                    reset_control_switch();
+                }
+            }
+            break;
+
+#if AUTOTUNE == ENABLED
+        case AUX_SWITCH_AUTOTUNE:
+            // turn on auto tuner
+            switch(ch_flag) {
+                case AUX_SWITCH_LOW:
+                case AUX_SWITCH_MIDDLE:
+                    // turn off tuning and return to standard pids
+                    if (roll_pitch_mode == ROLL_PITCH_AUTOTUNE) {
+                        set_roll_pitch_mode(ROLL_PITCH_STABLE);
+                    }
+                    break;
+                case AUX_SWITCH_HIGH:
+                    // start an auto tuning session
+                    // set roll-pitch mode to our special auto tuning stabilize roll-pitch mode
+                    set_roll_pitch_mode(ROLL_PITCH_AUTOTUNE);
+                    break;
+            }
+            break;
+#endif
+
+        case AUX_SWITCH_LAND:
+            if (ch_flag == AUX_SWITCH_HIGH) {
+                set_mode(LAND);
+            }else{
+                // return to flight mode switch's flight mode if we are currently in LAND
+                if (control_mode == LAND) {
+                    reset_control_switch();
+                }
             }
             break;
     }

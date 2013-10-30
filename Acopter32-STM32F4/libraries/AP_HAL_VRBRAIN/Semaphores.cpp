@@ -1,11 +1,12 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 #include <AP_HAL.h>
 
-#include <wirish.h>
-#include <AP_HAL.h>
+#if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
+
 #include <AP_HAL_VRBRAIN.h>
 #include "Semaphores.h"
 #include "Scheduler.h"
+
 using namespace VRBRAIN;
 
 extern const AP_HAL::HAL& hal;
@@ -48,14 +49,15 @@ bool VRBRAINSemaphore::_take_from_mainloop(uint32_t timeout_ms) {
         return false;
     }
 
+    uint16_t timeout_ticks = timeout_ms*10;
     do {
         /* Delay 1ms until we can successfully take, or we timed out */
-        hal.scheduler->delay(1);
-        timeout_ms--;
+        hal.scheduler->delay_microseconds(100);
+        timeout_ticks--;
         if (_take_nonblocking()) {
             return true;
         }
-    } while (timeout_ms > 0);
+    } while (timeout_ticks > 0);
 
     return false;
 }
@@ -70,3 +72,5 @@ bool VRBRAINSemaphore::_take_nonblocking() {
     interrupts();
     return result;
 }
+
+#endif
