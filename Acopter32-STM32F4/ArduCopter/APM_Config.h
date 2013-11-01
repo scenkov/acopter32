@@ -19,12 +19,15 @@
  * and in
  * libraries/AP_InertialSensor/AP_InertialSensor_MPU6000.h
  */
-
 #define ENHANCED
+/*-------------END ENHANCED-----------------*/
 
-/*--------------------------------------*/
+/*-------------EXTERNAL IMU-----------------*/
+/* To use External IMU connected to SPI3, uuncomment this line */
+//# define CONFIG_IMU_TYPE   CONFIG_IMU_MPU6000_EXT
+/*-------------END EXTERNAL IMU-----------------*/
 
-//#define FRAME_CONFIG HEXA_FRAME
+//#define FRAME_CONFIG OCTA_FRAME
 //#define FRAME_ORIENTATION      PLUS_FRAME
 
  //#define GPS_PROTOCOL           GPS_PROTOCOL_NONE
