@@ -20,7 +20,7 @@
  * libraries/AP_InertialSensor/AP_InertialSensor_MPU6000.h
  */
 
-//#define ENHANCED
+#define ENHANCED
 
 /*--------------------------------------*/
 

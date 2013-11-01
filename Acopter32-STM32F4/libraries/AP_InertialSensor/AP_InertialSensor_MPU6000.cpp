@@ -670,7 +670,7 @@ float AP_InertialSensor_MPU6000::get_gyro_drift_rate(void)
 bool AP_InertialSensor_MPU6000::sample_available()
 {
     _poll_data();
-    return (_count >> _sample_shift) > 0;
+    return (_count >> _sample_shift) > 9;
 }
 
 
