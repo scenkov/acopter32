@@ -25,6 +25,7 @@ VRBRAINAnalogSource::VRBRAINAnalogSource(int16_t pin, float initial_value) :
 float VRBRAINAnalogSource::read_average() {
     float temp;
     temp = (read_latest() * 0.8) + (_last_value * 0.2f);
+    _last_value = _value;
     return temp;
 }
 
@@ -50,11 +51,11 @@ void VRBRAINAnalogSource::set_settle_time(uint16_t settle_time_ms){}
  */
 float VRBRAINAnalogSource::voltage_average()
 {
-    return (5.0f/4096.0f) * read_average();
+    return (3.3f/4096.0f) * read_average();
 }
 float VRBRAINAnalogSource::voltage_latest()
 {
-    return (5.0f/4096.0f) * read_latest();
+    return (3.3f/4096.0f) * read_latest();
 }
 void VRBRAINAnalogSource::set_pin(uint8_t pin)
 {
