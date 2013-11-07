@@ -79,22 +79,24 @@ float VRBRAINAnalogSource::voltage_average_ratiometric(void)
 }
 
 void VRBRAINAnalogSource::set_pin(uint8_t pin) {
-    if (pin != _pin) {
-        // ensure the pin is marked as an INPUT pin
-        if (pin != ANALOG_INPUT_NONE && pin != ANALOG_INPUT_BOARD_VCC && pin > 0 && pin < BOARD_NR_GPIO_PINS) {
-            int8_t dpin = hal.gpio->analogPinToDigitalPin(pin);
-            if (dpin != -1) {
-                hal.gpio->pinMode(dpin, INPUT_ANALOG);
-            }
+    if (pin == _pin)
+	return;
+
+    // ensure the pin is marked as an INPUT pin
+    if (pin != ANALOG_INPUT_NONE && pin != ANALOG_INPUT_BOARD_VCC && pin < BOARD_NR_GPIO_PINS && pin > 0) {
+        int8_t dpin = hal.gpio->analogPinToDigitalPin(pin);
+        if (dpin != -1) {
+            hal.gpio->pinMode(dpin, INPUT_ANALOG);
         }
-        noInterrupts();
-        _sum = 0;
-        _sum_count = 0;
-        _last_average = 0;
-        _latest = 0;
-        _pin = pin;
-        interrupts();
     }
+
+    noInterrupts();
+    _sum = 0;
+    _sum_count = 0;
+    _last_average = 0;
+    _latest = 0;
+    _pin = pin;
+    interrupts();
 }
 
 void VRBRAINAnalogSource::set_stop_pin(uint8_t pin) {
@@ -142,16 +144,20 @@ void VRBRAINAnalogSource::setup_read() {
     }
     const adc_dev *dev = PIN_MAP[_pin].adc_device;
 
-    adc_set_reg_seqlen(dev, 1);
+    if(dev != NULL)
+	{
+	adc_set_reg_seqlen(dev, 1);
+	uint8 channel = 0;
+	if (_pin == ANALOG_INPUT_BOARD_VCC)
+	    ;//channel = PIN_MAP[VRBRAIN_VCC_ANALOG_IN_PIN].adc_channel;
+	else if (_pin == ANALOG_INPUT_NONE)
+	    ; // NOOP
+	else {
+	    channel = PIN_MAP[_pin].adc_channel;
+	    dev->adcx->SQR3 = channel;
+	}
 
-    uint8 channel = 0;
-    if (_pin == ANALOG_INPUT_BOARD_VCC)
-        channel = PIN_MAP[VRBRAIN_VCC_ANALOG_IN_PIN].adc_channel;
-    else if (_pin == ANALOG_INPUT_NONE) 
-        ; // NOOP
-    else
-        channel = PIN_MAP[_pin].adc_channel;
-    dev->adcx->SQR3 = channel;
+	}
 }
 
 void VRBRAINAnalogSource::stop_read() {

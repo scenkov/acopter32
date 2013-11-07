@@ -16,6 +16,13 @@
 /*
   Copied from: Flymaple port by Mike McCauley
  */
+#define ANLOGIN_DEBUGGING 1
+
+#if ANLOGIN_DEBUGGING
+ # define Debug(fmt, args ...)  do {hal.console->printf("%s:%d: " fmt "\n", __FUNCTION__, __LINE__, ## args); } while(0)
+#else
+ # define Debug(fmt, args ...)
+#endif
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
 
@@ -46,6 +53,7 @@ void VRBRAINAnalogIn::init(void* machtnichts) {
 }
 
 VRBRAINAnalogSource* VRBRAINAnalogIn::_create_channel(int16_t chnum) {
+
     VRBRAINAnalogSource *ch = new VRBRAINAnalogSource(chnum);
     _register_channel(ch);
     return ch;
@@ -63,39 +71,45 @@ void VRBRAINAnalogIn::_register_channel(VRBRAINAnalogSource* ch) {
 
     const adc_dev *dev = PIN_MAP[_channels[_num_channels]->_pin].adc_device;
 
-    /* Need to lock to increment _num_channels as it is used
-     * by the interrupt to access _channels */
-    noInterrupts();
-    _num_channels++;
-    interrupts();
-    // Start conversions:
 
-    //adc_reg_map *regs = ADC1->regs;
-    dev->adcx->CR2 |= ADC_CR2_SWSTART;
+	/* Need to lock to increment _num_channels as it is used
+	 * by the interrupt to access _channels */
+	noInterrupts();
+	_num_channels++;
+	interrupts();
+	// Start conversions:
+	if(dev != NULL){
+	    //adc_reg_map *regs = ADC1->regs;
+	    dev->adcx->CR2 |= ADC_CR2_SWSTART;
+	}
 }
 
 void VRBRAINAnalogIn::_timer_event(void)
 {
+
+    if (_num_channels == 0)
+    {
+        /* No channels are registered - nothing to be done. */
+        return;
+    }
+
     //adc_reg_map *regs = ADC1->regs;
     const adc_dev *dev = PIN_MAP[_channels[_active_channel]->_pin].adc_device;
 
-    if (_channels[_active_channel]->_pin == ANALOG_INPUT_NONE) {
+    uint8_t pin = _channels[_active_channel]->_pin;
+
+    if (dev == NULL || (pin == ANALOG_INPUT_NONE) || (pin < 0) || (pin >= BOARD_NR_GPIO_PINS)) {
         _channels[_active_channel]->new_sample(0);
         goto next_channel;
     }
 
     if (!(dev->adcx->SR & ADC_SR_EOC))
-    {
-        /* ADC Conversion is still running - this should not happen, as we
-         * are called at 1khz. */
-        return;
-    }
+	{
+	    /* ADC Conversion is still running - this should not happen, as we
+	     * are called at 1khz. */
+	    return;
+	}
 
-    if (_num_channels == 0) 
-    {
-        /* No channels are registered - nothing to be done. */
-        return;
-    }
 
     _channel_repeat_count++;
     if (_channel_repeat_count < CHANNEL_READ_REPEAT ||
@@ -120,6 +134,10 @@ next_channel:
     _active_channel = (_active_channel + 1) % _num_channels;
     /* Setup the next channel's conversion */
     _channels[_active_channel]->setup_read();
+
+    dev = PIN_MAP[_channels[_active_channel]->_pin].adc_device;
+
+    if(dev != NULL)
     /* Start conversion */
     dev->adcx->CR2 |= ADC_CR2_SWSTART;
 }
