@@ -16,9 +16,9 @@
 /*
   Copied from: Flymaple port by Mike McCauley
  */
-#define ANLOGIN_DEBUGGING 1
+#define ANALOGSOURCRE_DEBUGGING 1
 
-#if ANLOGIN_DEBUGGING
+#if ANALOGSOURCRE_DEBUGGING
  # define Debug(fmt, args ...)  do {hal.console->printf("%s:%d: " fmt "\n", __FUNCTION__, __LINE__, ## args); } while(0)
 #else
  # define Debug(fmt, args ...)
@@ -77,10 +77,11 @@ void VRBRAINAnalogIn::_register_channel(VRBRAINAnalogSource* ch) {
 	noInterrupts();
 	_num_channels++;
 	interrupts();
+
 	// Start conversions:
 	if(dev != NULL){
 	    //adc_reg_map *regs = ADC1->regs;
-	    dev->adcx->CR2 |= ADC_CR2_SWSTART;
+	    dev->adcx->CR2 |= (uint32_t)ADC_CR2_SWSTART;
 	}
 }
 
@@ -98,7 +99,7 @@ void VRBRAINAnalogIn::_timer_event(void)
 
     uint8_t pin = _channels[_active_channel]->_pin;
 
-    if (dev == NULL || (pin == ANALOG_INPUT_NONE) || (pin < 0) || (pin >= BOARD_NR_GPIO_PINS)) {
+    if (dev == NULL || (pin == ANALOG_INPUT_NONE)) {
         _channels[_active_channel]->new_sample(0);
         goto next_channel;
     }
@@ -116,7 +117,7 @@ void VRBRAINAnalogIn::_timer_event(void)
         !_channels[_active_channel]->reading_settled()) 
     {
         /* Start a new conversion, throw away the current conversion */
-        dev->adcx->CR2 |= ADC_CR2_SWSTART;
+        dev->adcx->CR2 |= (uint32_t)ADC_CR2_SWSTART;
         return;
     }
 
@@ -139,7 +140,7 @@ next_channel:
 
     if(dev != NULL)
     /* Start conversion */
-    dev->adcx->CR2 |= ADC_CR2_SWSTART;
+    dev->adcx->CR2 |= (uint32_t)ADC_CR2_SWSTART;
 }
 
 

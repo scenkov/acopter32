@@ -131,7 +131,6 @@ static void init_ardupilot()
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     //rssi_analog_source      = hal.analogin->channel(g.rssi_pin);
-    //board_vcc_analog_source = hal.analogin->channel(ANALOG_INPUT_BOARD_VCC);
 #endif
 
 #if HIL_MODE != HIL_MODE_ATTITUDE
@@ -575,7 +574,7 @@ static void check_usb_mux(void)
  */
 uint16_t board_voltage(void)
 {
-    //return board_vcc_analog_source->voltage_latest() * 1000;
+    return board_vcc_analog_source->voltage_latest() * 1000;
 }
 
 //

@@ -944,10 +944,9 @@ void setup() {
             &sonar_mode_filter);
 #endif
 
-#if CONFIG_HAL_BOARD != HAL_BOARD_VRBRAIN
     //rssi_analog_source      = hal.analogin->channel(255);
-    //board_vcc_analog_source = hal.analogin->channel(ANALOG_INPUT_BOARD_VCC);
-#endif
+    board_vcc_analog_source = hal.analogin->channel(ANALOG_INPUT_BOARD_VCC);
+
 
     init_ardupilot();
 
@@ -1213,7 +1212,7 @@ static void one_hz_loop()
     wp_nav.set_lean_angle_max(g.angle_max);
 
     // log battery info to the dataflash
-    if ((g.log_bitmask & MASK_LOG_CURRENT) && motors.armed())
+    if (g.log_bitmask & MASK_LOG_CURRENT)
         Log_Write_Current();
 
     // perform pre-arm checks

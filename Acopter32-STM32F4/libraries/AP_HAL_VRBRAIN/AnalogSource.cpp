@@ -16,6 +16,13 @@
 /*
   Copied from: Flymaple port by Mike McCauley
  */
+#define ANLOGSOURCRE_DEBUGGING 0
+
+#if ANLOGIN_DEBUGGING
+ # define Debug(fmt, args ...)  do {hal.console->printf("%s:%d: " fmt "\n", __FUNCTION__, __LINE__, ## args); } while(0)
+#else
+ # define Debug(fmt, args ...)
+#endif
 
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
@@ -39,6 +46,7 @@ VRBRAINAnalogSource::VRBRAINAnalogSource(uint8_t pin) :
     _stop_pin(ANALOG_INPUT_NONE),
     _settle_time_ms(0)
 {
+    Debug("Initialize VRBRAINAnalogSource pin %u", pin)
     set_pin(pin);
 }
 
@@ -147,20 +155,30 @@ void VRBRAINAnalogSource::setup_read() {
     if(dev != NULL)
 	{
 	adc_set_reg_seqlen(dev, 1);
-	uint8 channel = 0;
-	if (_pin == ANALOG_INPUT_BOARD_VCC)
-	    ;//channel = PIN_MAP[VRBRAIN_VCC_ANALOG_IN_PIN].adc_channel;
+	uint8_t channel = 0;
+
+	if (_pin == ANALOG_INPUT_BOARD_VCC){
+	    ADC_TempSensorVrefintCmd(ENABLE);
+	    ADC_RegularChannelConfig(ADC1, ADC_Channel_Vrefint, 2, ADC_SampleTime_56Cycles);
+	}
 	else if (_pin == ANALOG_INPUT_NONE)
 	    ; // NOOP
 	else {
 	    channel = PIN_MAP[_pin].adc_channel;
-	    dev->adcx->SQR3 = channel;
+	}
+	if(channel != 0){
+	    adc_disable(dev);
+	    ADC_RegularChannelConfig(dev->adcx, channel, 1, ADC_SampleTime_56Cycles);
+	    adc_enable(dev);
 	}
 
 	}
 }
 
 void VRBRAINAnalogSource::stop_read() {
+    if(_pin == ANALOG_INPUT_BOARD_VCC) {
+	ADC_TempSensorVrefintCmd(DISABLE);
+    }
     if (_stop_pin != ANALOG_INPUT_NONE) {
         uint8_t digital_pin = hal.gpio->analogPinToDigitalPin(_stop_pin);
         hal.gpio->pinMode(digital_pin, GPIO_OUTPUT);

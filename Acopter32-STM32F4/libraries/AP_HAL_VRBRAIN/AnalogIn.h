@@ -26,7 +26,7 @@
 // This is the pin number of the pin connected to VCC
 // this is not built in to the flymaple board, so you must connect
 // this pin to the board 3.3V VCC
-#define VRBRAIN_VCC_ANALOG_IN_PIN 255
+//#define VRBRAIN_VCC_ANALOG_IN_PIN 255
 
 class VRBRAIN::VRBRAINAnalogSource : public AP_HAL::AnalogSource {
 public:
