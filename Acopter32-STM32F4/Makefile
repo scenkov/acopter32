@@ -60,7 +60,7 @@ SKETCHCPP_SRC   := $(SKETCHPDE) $(sort $(filter-out $(SKETCHPDE),$(SKETCHPDESRCS
 
 LIBRARY_INCLUDES := 
 
-SUPPORT_PATH     := $(SRCROOT)/Libraries/AP_HAL_VRBRAIN/support
+SUPPORT_PATH     := $(SRCROOT)/libraries/AP_HAL_VRBRAIN/support
 # Support files for linker
 LDDIR            := $(SUPPORT_PATH)/ld
 # Support files for this Makefile
