@@ -15,7 +15,7 @@
 #define DM_PIN_PORT   		_GPIOA  //PA11
 #define DM_PIN_PIN   		11
 #define DP_PIN_PORT   		_GPIOA  //PA12
-#define DP_PIN_PIN   		12  //PA12
+#define DP_PIN_PIN   		12 	//PA12
 
 
 /* Exported typef ------------------------------------------------------------*/
@@ -44,7 +44,7 @@ typedef struct {
 	char *interface;
 } usb_attr_t;
 
-#define I_USB_CLEAR			1
+#define I_USB_CLEAR		1
 #define I_USB_CONNECTED		2
 #define I_USB_GETATTR		3
 #define I_USB_SETATTR		4

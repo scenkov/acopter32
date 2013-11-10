@@ -72,7 +72,7 @@ float VRBRAINAnalogSource::voltage_average(void)
 float VRBRAINAnalogSource::voltage_latest(void)
 {
     float v = read_latest();
-    return v * (3.3f / 4095.0f);
+    return v * (3.3f / 4096.0f);
 }
 
 /*
@@ -83,7 +83,7 @@ float VRBRAINAnalogSource::voltage_latest(void)
 float VRBRAINAnalogSource::voltage_average_ratiometric(void)
 {
     float v = read_average();
-    return v * (3.3f / 4095.0f);
+    return v * (3.3f / 4096.0f);
 }
 
 void VRBRAINAnalogSource::set_pin(uint8_t pin) {
@@ -166,11 +166,11 @@ void VRBRAINAnalogSource::setup_read() {
 	else {
 	    channel = PIN_MAP[_pin].adc_channel;
 	}
-	if(channel != 0){
+//	if(channel != 0){
 	    adc_disable(dev);
 	    ADC_RegularChannelConfig(dev->adcx, channel, 1, ADC_SampleTime_56Cycles);
 	    adc_enable(dev);
-	}
+//	}
 
 	}
 }
