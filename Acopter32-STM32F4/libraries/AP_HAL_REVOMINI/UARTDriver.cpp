@@ -48,6 +48,7 @@ void REVOMINIUARTDriver::begin(uint32_t baud) {
 
     if(_usb_present == 1)
     {
+/*
 	usb_attr_t usb_attr;
 
 	usb_open();
@@ -58,7 +59,7 @@ void REVOMINIUARTDriver::begin(uint32_t baud) {
 	usb_attr.present_port = _GPIOC;
 	usb_attr.present_pin = 5;
 	usb_ioctl(I_USB_SETATTR, &usb_attr);
-
+*/
     }
     else
     {
