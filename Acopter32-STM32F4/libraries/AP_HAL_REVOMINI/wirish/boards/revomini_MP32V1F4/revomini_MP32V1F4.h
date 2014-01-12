@@ -33,6 +33,8 @@ void boardInit(void);
 #define BOARD_USART1_RX_PIN     24 
 #define BOARD_USART3_TX_PIN     0
 #define BOARD_USART3_RX_PIN     100
+#define BOARD_USART6_TX_PIN     12
+#define BOARD_USART6_RX_PIN     13
 
        
 #define BOARD_NR_SPI            3
